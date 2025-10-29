@@ -1,48 +1,34 @@
 """
-Database Schemas
+Database Schemas for GestureAI
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a collection in MongoDB. The collection name
+is the lowercase of the class name (e.g., Gesture -> "gesture").
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
-# Example schemas (replace with your own):
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class Gesture(BaseModel):
+    """Custom hand gesture definition"""
+    name: str = Field(..., description="Human-friendly name of the gesture")
+    intent: str = Field(..., description="What this gesture should do, e.g., 'next_slide'")
+    app: Optional[str] = Field(None, description="Optional app or device this applies to")
+    sensitivity: Optional[float] = Field(0.7, ge=0.0, le=1.0, description="Detection sensitivity")
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Any extra config")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class VoiceCommand(BaseModel):
+    """Custom voice phrase mapping"""
+    phrase: str = Field(..., description="Natural language phrase to trigger")
+    intent: str = Field(..., description="Action to execute, e.g., 'open_notes'")
+    language: Optional[str] = Field("en", description="ISO language code")
+    app: Optional[str] = Field(None, description="Target app or device")
+    context: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+
+class Workflow(BaseModel):
+    """Optional multi-step automation"""
+    name: str
+    steps: List[Dict[str, Any]] = Field(..., description="List of actions/intents with parameters")
+    trigger: Optional[str] = Field(None, description="Gesture or voice phrase to start this workflow")
